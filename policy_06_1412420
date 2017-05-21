@@ -1,0 +1,185 @@
+-- ======================== YEU CAU 6 ================================
+
+-- view nhan_vie_1a
+-- drop view nhan_vien_1a_v;
+create view nhan_vien_1a_v
+as
+  select * from NhanVien;
+/
+-- drop role Nhan_Vien_1a_r;
+create role Nhan_Vien_1a_r;
+/
+grant create session to Nhan_Vien_1a_r;
+/
+grant select on nhan_vien_1a_v to Nhan_Vien_1a_r;
+/
+create user NV197 identified by 123;
+/
+create user NV818 identified by 123;
+/
+grant Nhan_Vien_1a_r to NV818;
+/
+grant Nhan_Vien_1a_r to NV197;
+/
+-- create function
+create or replace function 
+xem_thong_tin_nhan_vien(
+  p_schema in varchar2,
+  p_object in varchar2 )
+return varchar2
+is 
+  return_val varchar2(400);
+  truong_phong number(1) := 0;
+  truong_chi_nhanh number(1) := 0;
+  truong_du_an number(1) := 0;
+  phong number(6);
+begin
+  select case 
+    when exists(select * from PhongBan where TruongPhong = user)
+     then 1
+     else 0
+    end into truong_phong
+  from dual;
+  
+  select case 
+    when exists(select * from ChiNhanh where TruongChiNhanh = user)
+     then 1
+     else 0
+    end into truong_chi_nhanh
+  from dual;
+  
+  select case 
+    when exists(select * from DuAn where TruongDA = user)
+     then 1
+     else 0
+    end into truong_du_an
+  from dual;
+  
+  if (truong_phong = 1 or truong_chi_nhanh = 1 or truong_du_an = 1) then
+    return_val := '';
+  else
+    select (
+      select MaPhong from  NhanVien where MaNV = user
+    ) into phong from dual;
+    if (phong is null) then
+      return_val := 'MaPhong = -1';
+    else
+      return_val := 'MaPhong = '||phong;
+    end if; 
+  end if;
+  return return_val;
+end;
+/
+create or replace function 
+xem_luong_chinh_minh(
+  p_schema in varchar2,
+  p_object in varchar2 )
+return varchar2
+is 
+  return_val varchar2(400);
+  truong_phong number(1) := 0;
+  truong_chi_nhanh number(1) := 0;
+  truong_du_an number(1) := 0;
+  phong number(6);
+begin
+  select case 
+    when exists(select * from PhongBan where TruongPhong = user)
+     then 1
+     else 0
+    end into truong_phong
+  from dual;
+  
+  select case 
+    when exists(select * from ChiNhanh where TruongChiNhanh = user)
+     then 1
+     else 0
+    end into truong_chi_nhanh
+  from dual;
+  
+  select case 
+    when exists(select * from DuAn where TruongDA = user)
+     then 1
+     else 0
+    end into truong_du_an
+  from dual;
+  
+  if (truong_phong = 1 or truong_chi_nhanh = 1 or truong_du_an = 1) then
+    return_val := '';
+  else
+    return_val := 'MaNV = '''||user||'''';
+  end if;
+  return return_val;
+end;
+/
+-- apply function to policy
+
+-- apply xem_thong_tin_nhan_vien to nhan_vien_1a_v
+begin 
+  
+  DBMS_RLS.add_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'nhan_vien_1a_v',
+    policy_name => 'nhan_vien_p1a',
+    function_schema => 'admin_bt1',
+    policy_function => 'xem_thong_tin_nhan_vien',
+    statement_types => 'select'
+    );
+
+end;
+/
+-- apply xem_luong_chinh_minh to nhan_vien_1a_v
+begin 
+  
+  DBMS_RLS.add_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'nhan_vien_1a_v',
+    policy_name => 'nhan_vien_p1b',
+    function_schema => 'admin_bt1',
+    policy_function => 'xem_luong_chinh_minh',
+    statement_types => 'select',
+    sec_relevant_cols => 'Luong',
+    sec_relevant_cols_opt => DBMS_RLS.all_rows
+    );
+
+end;
+/
+-- remove xem_thong_tin_nhan_vien to nhan_vien_1a_v
+begin 
+  
+   DBMS_RLS.drop_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'nhan_vien_1a_v',
+    policy_name => 'nhan_vien_p1a');
+
+end;
+/
+-- remove xem_luong_chinh_minh to nhan_vien_1a_v
+begin 
+  
+   DBMS_RLS.drop_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'nhan_vien_1a_v',
+    policy_name => 'nhan_vien_p1b');
+
+end;
+/
+
+-- GIẢI THÍCH
+/*
+### Yêu cầu 6 - VPD
+###### Nhân viên chỉ xem nhân viên phòng mình và lương bản thân
+- Vấn đề với **self-reference**: để nhân viên biết được phòng mình thì phải query bảng nhân viên trong funtion tạo VPD, lúc sau lại gán policy đó cho bảng nhân viên gây ra recursive => Giải pháp là tạo view và gán policy cho view đó. Tức là query trong function sẽ query trên bảng NhanVien và gán policy cho view. Ta không thể làm ngược lại query trên view trong function và gán policy trong bảng vì khi query view trong function thực chất cũng select trên bảng Nhân viên vẫn gây vấn đề self-references
+- Các bước
+  - Tạo view ``Nhan_Vien_1a_r`` là select * bảng NhanVien
+  - Tạo function ``xem_thong_tin_nhan_vien`` với:
+    + Nếu NV là trưởng phòng hoặc trưởng chi nhánh hoặc trưởng dự án thì return vị từ rỗng ``''``
+    + Nếu là một nhân viên bình thường, thì xem nhân viên đó có ở phòng nào không, nếu không thì return về một điều kiện luôn sai ``MaPhong = -1`` or ``1 = 0``. Ngược lại return về ``MaPhong = MaPhong của nhân viên đó``
+  - ``add_policy`` với ``policy_name`` là ``nhan_vien_p1a`` và gán function ``xem_thong_tin_nhan_vien``. Vậy là giải quyết được vấn để `nhân viên xem các thành viên của phòng ban mình`
+  - ``add_policy`` ``policy_name`` là ``nhan_vien_p1b`` và gán ``xem_thong_tin_nhan_vien`` nhưng thêm vào đó sẽ gán thêm 2 tham số  
+    ``` sec_relevant_cols => 'Luong',```
+    ``` sec_relevant_cols_opt => DBMS_RLS.all_rows```
+  để giải quyết vấn đề nhân viên xem lương chính mình (vẫn xem thông tin các nhân viên khác cùng phòng trừ lương)
+
+-- END GIẢI THÍCH
+
+-- ======================== END YEU CAU 6 ================================
