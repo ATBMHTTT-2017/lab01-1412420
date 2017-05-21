@@ -1,0 +1,77 @@
+-- ======================== YEU CAU 8 ================================
+
+select MaDA
+from DuAn d
+join PhongBan p on p.MaPhong = d.PhongChuTri
+where p.TruongPhong = 'NV197';
+/
+-- create function
+create or replace function 
+trphong_r_chi_tieu_da_phong (
+  p_schema in varchar2,
+  p_object in varchar2)
+return varchar2 
+is 
+  return_val varchar2(400);
+  cursor c1 is
+  select MaDA
+  from DuAn d
+  join PhongBan p on p.MaPhong = d.PhongChuTri
+  where p.TruongPhong = user;
+begin
+  return_val := '';
+  for mada in c1
+  loop
+    return_val := return_val ||','|| mada.MaDA;
+  end loop;
+  return_val := substr(return_val, 2);
+  return_val := 'DuAn IN ('||return_val||')';
+  -- empty
+  if(return_val = 'DuAn IN ()') then
+    return '1 = 0';
+  end if;
+  return return_val;
+end;
+/
+-- apply truong_phong_rw_chi_tieu_du_an_phong to ChiTieu
+
+begin 
+  
+  DBMS_RLS.add_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'ChiTieu',
+    policy_name => 'chi_tieu_1b',
+    function_schema =>'admin_bt1',
+    policy_function => 'trphong_r_chi_tieu_da_phong',
+    statement_types => 'select'
+    );
+
+end;
+/
+
+create user NV197 identified by 123;
+grant create session to NV197;
+grant select on ChiTieu to NV197;
+-- remove truong_phong_rw_chi_tieu_du_an_phong to ChiTieu
+
+begin 
+  
+   DBMS_RLS.drop_policy (
+    object_schema => 'admin_bt1',
+    object_name => 'ChiTieu',
+    policy_name => 'chi_tieu_1b');
+
+end;
+/
+-- GIẢI THÍCH
+### Yêu cầu 8 - VPD 
+###### Trưởng phòng đọc thông tin chi tiêu dự án phòng mình quản lí
+- Lấy các dự án thuộc về phòng mà USER(đang đăng nhập) làm trưởng phòng làm điều kiện return của fucntion.
+- Tạo function ``trphong_r_chi_tieu_da_phong``
+  + Sử dụng cursor loop qua các dự án mà phòng của user là trưởng phòng quản lí
+  + return lại ``DuAN in DuAN có được từ vong lặp ``
+- ``add_policy`` với ``policy_name = chi_tieu_1b`` và gán với function ``trphong_r_chi_tieu_da_phong``
+
+-- END GIẢI THÍCH
+
+-- ======================== END YEU CAU 8 ================================
