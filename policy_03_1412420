@@ -34,15 +34,4 @@ end;
 /
 -- ========= end role truong phong
 
--- GIẢI THÍCH
-/*
-### Yêu cầu 3 - DAC
-###### Trưởng phòng được phép cập nhật và thêm thông tin vào dự án
-- Tạo role Truong_Phong_r 
-- Grant insert, update trên table DuAn cho role này
-- grant role này cho tất cả các user là trưởng phòng (tạo hàm GrantRoleToTruongPhong để grant cho linh hoạt)
-*/
-
--- END GIẢI THÍCH
-
 -- ======================== END YEU CAU 3 ================================
