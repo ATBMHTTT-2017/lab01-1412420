@@ -63,15 +63,5 @@ begin
 
 end;
 /
--- GIẢI THÍCH
-### Yêu cầu 8 - VPD 
-###### Trưởng phòng đọc thông tin chi tiêu dự án phòng mình quản lí
-- Lấy các dự án thuộc về phòng mà USER(đang đăng nhập) làm trưởng phòng làm điều kiện return của fucntion.
-- Tạo function ``trphong_r_chi_tieu_da_phong``
-  + Sử dụng cursor loop qua các dự án mà phòng của user là trưởng phòng quản lí
-  + return lại ``DuAN in DuAN có được từ vong lặp ``
-- ``add_policy`` với ``policy_name = chi_tieu_1b`` và gán với function ``trphong_r_chi_tieu_da_phong``
-
--- END GIẢI THÍCH
 
 -- ======================== END YEU CAU 8 ================================

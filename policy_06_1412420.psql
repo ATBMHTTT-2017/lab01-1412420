@@ -164,22 +164,4 @@ begin
 end;
 /
 
--- GIẢI THÍCH
-/*
-### Yêu cầu 6 - VPD
-###### Nhân viên chỉ xem nhân viên phòng mình và lương bản thân
-- Vấn đề với **self-reference**: để nhân viên biết được phòng mình thì phải query bảng nhân viên trong funtion tạo VPD, lúc sau lại gán policy đó cho bảng nhân viên gây ra recursive => Giải pháp là tạo view và gán policy cho view đó. Tức là query trong function sẽ query trên bảng NhanVien và gán policy cho view. Ta không thể làm ngược lại query trên view trong function và gán policy trong bảng vì khi query view trong function thực chất cũng select trên bảng Nhân viên vẫn gây vấn đề self-references
-- Các bước
-  - Tạo view ``Nhan_Vien_1a_r`` là select * bảng NhanVien
-  - Tạo function ``xem_thong_tin_nhan_vien`` với:
-    + Nếu NV là trưởng phòng hoặc trưởng chi nhánh hoặc trưởng dự án thì return vị từ rỗng ``''``
-    + Nếu là một nhân viên bình thường, thì xem nhân viên đó có ở phòng nào không, nếu không thì return về một điều kiện luôn sai ``MaPhong = -1`` or ``1 = 0``. Ngược lại return về ``MaPhong = MaPhong của nhân viên đó``
-  - ``add_policy`` với ``policy_name`` là ``nhan_vien_p1a`` và gán function ``xem_thong_tin_nhan_vien``. Vậy là giải quyết được vấn để `nhân viên xem các thành viên của phòng ban mình`
-  - ``add_policy`` ``policy_name`` là ``nhan_vien_p1b`` và gán ``xem_thong_tin_nhan_vien`` nhưng thêm vào đó sẽ gán thêm 2 tham số  
-    ``` sec_relevant_cols => 'Luong',```
-    ``` sec_relevant_cols_opt => DBMS_RLS.all_rows```
-  để giải quyết vấn đề nhân viên xem lương chính mình (vẫn xem thông tin các nhân viên khác cùng phòng trừ lương)
-
--- END GIẢI THÍCH
-
 -- ======================== END YEU CAU 6 ================================

@@ -20,15 +20,5 @@ grant create session to Giam_Doc;
 -- grant select on DuAn_View_1a to giam doc
 grant select on DuAn_View_1a to Giam_Doc;
 /
--- GIẢI THÍCH
-/*
-### Yêu cầu 4 - DAC
-###### Giám đốc được phép xem thông tin dự án
-- Tạo view ``DuAn_View_1a`` với những yêu cầu select đặt ra
-- Tạo role ``Giam_Doc`` và grant select trên view ``DuAn_View_1a`` cho role ``Giam_Doc``
-- Grant role `GiamDoc` cho user GiamDoc
-*/
-
--- END GIẢI THÍCH
 
 -- ======================== END YEU CAU 4 ================================
